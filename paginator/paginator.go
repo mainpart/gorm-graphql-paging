@@ -23,10 +23,12 @@ func New(opts ...Option) *Paginator {
 
 // Paginator a builder doing pagination
 type Paginator struct {
-	cursor Cursor
-	rules  []Rule
-	limit  int
-	order  Order
+	cursor      Cursor
+	rules       []Rule
+	first       int
+	last        int
+	order       Order
+	invertOrder bool
 }
 
 // SetRules sets paging rules
@@ -46,9 +48,11 @@ func (p *Paginator) SetKeys(keys ...string) {
 	p.SetRules(rules...)
 }
 
-// SetLimit sets paging limit
-func (p *Paginator) SetLimit(limit int) {
-	p.limit = limit
+func (p *Paginator) SetFirst(first int) {
+	p.first = first
+}
+func (p *Paginator) SetLast(last int) {
+	p.last = last
 }
 
 // SetOrder sets paging order
@@ -64,6 +68,10 @@ func (p *Paginator) SetAfterCursor(afterCursor string) {
 // SetBeforeCursor sets paging before cursor
 func (p *Paginator) SetBeforeCursor(beforeCursor string) {
 	p.cursor.Before = &beforeCursor
+}
+
+func (p *Paginator) SetInvert(b bool) {
+	p.invertOrder = b
 }
 
 // Paginate paginates data
@@ -83,16 +91,28 @@ func (p *Paginator) Paginate(db *gorm.DB, dest interface{}) (result *gorm.DB, c 
 	elems := reflect.ValueOf(dest).Elem()
 	// only encode next cursor when elems is not empty slice
 	if elems.Kind() == reflect.Slice && elems.Len() > 0 {
-		hasMore := elems.Len() > p.limit
-		if hasMore {
-			elems.Set(elems.Slice(0, elems.Len()-1))
-		}
-		if p.isBackward() {
-			elems.Set(reverse(elems))
+		var hasMore bool
+		if p.first > 0 {
+			if elems.Len() > p.first {
+				hasMore = true
+				elems.Set(elems.Slice(0, p.first))
+			}
+		} else if p.last > 0 {
+			if elems.Len() > p.last {
+				hasMore = true
+				elems.Set(elems.Slice(elems.Len()-p.last-1, elems.Len()-1))
+			}
 		}
 		if c, err = p.encodeCursor(elems, hasMore); err != nil {
 			return
 		}
+		//if p.invertOrder {
+		//	elems.Set(reverse(elems))
+		//}
+		//if p.isBackward() {
+		//	elems.Set(reverse(elems))
+		//}
+
 	}
 	return
 }
@@ -103,9 +123,9 @@ func (p *Paginator) validate(dest interface{}) (err error) {
 	if len(p.rules) == 0 {
 		return ErrNoRule
 	}
-	if p.limit <= 0 {
-		return ErrInvalidLimit
-	}
+	//if p.limit <= 0 {
+	//	return ErrInvalidLimit
+	//}
 	if err = p.order.validate(); err != nil {
 		return
 	}
@@ -173,7 +193,7 @@ func isNil(i interface{}) bool {
 }
 
 func (p *Paginator) decodeCursor(dest interface{}) (result []interface{}, err error) {
-	if p.isForward() {
+	if p.isForward() && p.cursor.After != nil {
 		if result, err = cursor.NewDecoder(p.getKeys()...).Decode(*p.cursor.After, dest); err != nil {
 			err = ErrInvalidCursor
 		}
@@ -191,18 +211,34 @@ func (p *Paginator) decodeCursor(dest interface{}) (result []interface{}, err er
 	return
 }
 
+//func (p *Paginator) canLimit() int {
+//	if p.isForward() && p.first != 0 {
+//		return p.first
+//	} else if p.isBackward() && p.last != 0 {
+//		return p.last
+//	} else {
+//		return 0
+//	}
+//}
+
 func (p *Paginator) isForward() bool {
-	return p.cursor.After != nil
+	return p.cursor.Before == nil || p.cursor.After != nil
 }
 
 func (p *Paginator) isBackward() bool {
 	// forward take precedence over backward
-	return !p.isForward() && p.cursor.Before != nil
+	return p.cursor.Before != nil
 }
 
 func (p *Paginator) appendPagingQuery(db *gorm.DB, fields []interface{}) *gorm.DB {
 	stmt := db
-	stmt = stmt.Limit(p.limit + 1)
+	if p.first > 0 {
+		stmt = stmt.Limit(p.first + 1)
+	}
+	if p.last > 0 {
+		stmt = stmt.Limit(p.last + 1)
+	}
+
 	stmt = stmt.Order(p.buildOrderSQL())
 	if len(fields) > 0 {
 		stmt = stmt.Where(
@@ -217,7 +253,7 @@ func (p *Paginator) buildOrderSQL() string {
 	orders := make([]string, len(p.rules))
 	for i, rule := range p.rules {
 		order := rule.Order
-		if p.isBackward() {
+		if p.last > 0 {
 			order = order.flip()
 		}
 		orders[i] = fmt.Sprintf("%s %s", rule.SQLRepr, order)
@@ -251,22 +287,17 @@ func (p *Paginator) buildCursorSQLQueryArgs(fields []interface{}) (args []interf
 
 func (p *Paginator) encodeCursor(elems reflect.Value, hasMore bool) (result Cursor, err error) {
 	encoder := cursor.NewEncoder(p.getKeys()...)
-	// encode after cursor
-	if p.isBackward() || hasMore {
-		c, err := encoder.Encode(elems.Index(elems.Len() - 1))
-		if err != nil {
-			return Cursor{}, err
-		}
-		result.After = &c
+
+	after, err := encoder.Encode(elems.Index(elems.Len() - 1))
+	if err != nil {
+		return Cursor{}, err
 	}
-	// encode before cursor
-	if p.isForward() || (hasMore && p.isBackward()) {
-		c, err := encoder.Encode(elems.Index(0))
-		if err != nil {
-			return Cursor{}, err
-		}
-		result.Before = &c
+	result.After = &after
+	before, err := encoder.Encode(elems.Index(0))
+	if err != nil {
+		return Cursor{}, err
 	}
+	result.Before = &before
 	return
 }
 

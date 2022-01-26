@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"gorm.io/driver/postgres"
+	_ "gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -43,7 +44,8 @@ type paginatorSuite struct {
 
 func (s *paginatorSuite) SetupSuite() {
 	db, err := gorm.Open(
-		postgres.Open("host=localhost port=8765 dbname=test user=test password=test sslmode=disable"),
+		//sqlite.Open("sqlite-test.db"),
+		postgres.Open("host=localhost port=5432 dbname=habrdb user=habrpguser password=pgpwd4habr sslmode=disable"),
 		&gorm.Config{},
 	)
 	if err != nil {

@@ -2,7 +2,7 @@ package paginator
 
 var defaultConfig = Config{
 	Keys:  []string{"ID"},
-	Limit: 10,
+	First: 10,
 	Order: DESC,
 }
 
@@ -13,12 +13,14 @@ type Option interface {
 
 // Config for paginator
 type Config struct {
-	Rules  []Rule
-	Keys   []string
-	Limit  int
-	Order  Order
-	After  string
-	Before string
+	Rules       []Rule
+	Keys        []string
+	First       int
+	Last        int
+	Order       Order
+	After       string
+	Before      string
+	InvertOrder bool
 }
 
 // Apply applies config to paginator
@@ -30,8 +32,12 @@ func (c *Config) Apply(p *Paginator) {
 	if c.Rules == nil && c.Keys != nil {
 		p.SetKeys(c.Keys...)
 	}
-	if c.Limit != 0 {
-		p.SetLimit(c.Limit)
+	if c.First != 0 {
+		p.SetFirst(c.First)
+	}
+	if c.Last != 0 {
+		p.SetLast(c.Last)
+		p.SetFirst(0)
 	}
 	if c.Order != "" {
 		p.SetOrder(c.Order)
@@ -42,6 +48,7 @@ func (c *Config) Apply(p *Paginator) {
 	if c.Before != "" {
 		p.SetBeforeCursor(c.Before)
 	}
+	p.SetInvert(c.InvertOrder)
 }
 
 // WithRules configures rules for paginator
@@ -59,9 +66,16 @@ func WithKeys(keys ...string) Option {
 }
 
 // WithLimit configures limit for paginator
-func WithLimit(limit int) Option {
+func WithFirst(first int) Option {
 	return &Config{
-		Limit: limit,
+		First: first,
+	}
+}
+
+// WithLimit configures limit for paginator
+func WithLast(last int) Option {
+	return &Config{
+		Last: last,
 	}
 }
 

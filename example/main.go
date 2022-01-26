@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm/logger"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -19,7 +20,10 @@ type Product struct {
 
 func main() {
 	// for gorm setup you can refer to: https://gorm.io/docs/#Quick-Start
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -31,6 +35,10 @@ func main() {
 	db.Create(&Product{Code: "A", Price: 123})
 	db.Create(&Product{Code: "B", Price: 123})
 	db.Create(&Product{Code: "C", Price: 123})
+	db.Create(&Product{Code: "D", Price: 123})
+	db.Create(&Product{Code: "E", Price: 123})
+	db.Create(&Product{Code: "F", Price: 123})
+
 	// setup product with price 456 for noise
 	db.Create(&Product{Code: "D", Price: 456})
 	db.Create(&Product{Code: "E", Price: 456})
@@ -45,7 +53,8 @@ func main() {
 	fmt.Println("===== page 1 - no cursor with limit 1 =====")
 
 	p := paginator.New(&paginator.Config{
-		Limit: 1,
+		First: 6,
+		Order: paginator.ASC,
 	})
 
 	var p1Products []Product
@@ -66,9 +75,12 @@ func main() {
 	// page 2
 
 	fmt.Println("===== page 2 - use after cursor from page 1 =====")
+	stmt = db.Where("price = ?", 123)
 
 	p = paginator.New(&paginator.Config{
-		After: *p1Cursor.After,
+		Before: *p1Cursor.After,
+		First:  2,
+		Order:  paginator.DESC,
 	})
 
 	var p2Products []Product
@@ -89,7 +101,9 @@ func main() {
 
 	p = paginator.New(&paginator.Config{
 		Before: *p2Cursor.Before,
+		First:  2,
 	})
+	stmt = db.Where("price = ?", 123)
 
 	var p3Products []Product
 

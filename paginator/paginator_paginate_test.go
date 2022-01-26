@@ -88,7 +88,7 @@ func (s *paginatorSuite) TestPaginateSpecialCharacter() {
 
 	cfg := Config{
 		Keys:  []string{"Remark"},
-		Limit: 3,
+		First: 3,
 	}
 
 	var p1 []order
@@ -152,7 +152,7 @@ func (s *paginatorSuite) TestPaginateSingleKey() {
 
 	cfg := Config{
 		Keys:  []string{"CreatedAt"},
-		Limit: 2,
+		First: 2,
 	}
 
 	var p1 []order
@@ -188,7 +188,7 @@ func (s *paginatorSuite) TestPaginateMultipleKeys() {
 
 	cfg := Config{
 		Keys:  []string{"CreatedAt", "ID"},
-		Limit: 2,
+		First: 2,
 	}
 
 	var p1 []order
@@ -222,7 +222,7 @@ func (s *paginatorSuite) TestPaginatePointerKey() {
 
 	cfg := Config{
 		Keys:  []string{"Remark", "ID"},
-		Limit: 2,
+		First: 2,
 	}
 
 	var p1 []order
@@ -289,14 +289,14 @@ func (s *paginatorSuite) TestPaginateLimit() {
 
 	var p1 []order
 	_, c, _ := New(&Config{
-		Limit: 1,
+		First: 1,
 	}).Paginate(s.db, &p1)
 	s.Len(p1, 1)
 	s.assertForwardOnly(c)
 
 	var p2 []order
 	_, c, _ = New(&Config{
-		Limit: 20,
+		First: 20,
 		After: *c.After,
 	}).Paginate(s.db, &p2)
 	s.Len(p2, 9)
@@ -304,7 +304,7 @@ func (s *paginatorSuite) TestPaginateLimit() {
 
 	var p3 []order
 	_, c, _ = New(&Config{
-		Limit:  100,
+		First:  100,
 		Before: *c.Before,
 	}).Paginate(s.db, &p3)
 	s.Len(p3, 1)
@@ -325,7 +325,7 @@ func (s *paginatorSuite) TestPaginateOrder() {
 
 	cfg := Config{
 		Keys:  []string{"CreatedAt", "ID"},
-		Limit: 2,
+		First: 2,
 	}
 
 	var p1 []order
@@ -375,7 +375,7 @@ func (s *paginatorSuite) TestPaginateOrderByKey() {
 				Order: ASC,
 			},
 		},
-		Limit: 2,
+		First: 2,
 		Order: DESC, // default order for no order rule
 	}
 
@@ -418,7 +418,7 @@ func (s *paginatorSuite) TestPaginateJoinQuery() {
 		Joins("JOIN orders ON orders.id = items.order_id")
 
 	cfg := Config{
-		Limit: 3,
+		First: 3,
 	}
 
 	var p1 []item
@@ -483,7 +483,7 @@ func (s *paginatorSuite) TestPaginateJoinQueryWithAlias() {
 				SQLRepr: "its.id",
 			},
 		},
-		Limit: 3,
+		First: 3,
 	}
 
 	var p1 []itemDTO
@@ -538,7 +538,7 @@ func (s *paginatorSuite) TestPaginateReplaceNULL() {
 				Key: "ID",
 			},
 		},
-		Limit: 3,
+		First: 3,
 	}
 
 	var p1 []order
@@ -578,7 +578,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndKeyOptions() {
 	var temp []order
 	result, c, err := New(
 		WithKeys("CreatedAt", "ID"),
-		WithLimit(3),
+		WithFirst(3),
 	).Paginate(s.db, &temp)
 	if err != nil {
 		s.FailNow(err.Error())
@@ -596,7 +596,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndKeyOptions() {
 
 	opts := []Option{
 		WithKeys("CreatedAt", "ID"),
-		WithLimit(3),
+		WithFirst(3),
 		WithOrder(ASC),
 		WithAfter(anchorCursor),
 	}
@@ -608,7 +608,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndKeyOptions() {
 
 	p := New()
 	p.SetKeys("CreatedAt", "ID")
-	p.SetLimit(3)
+	p.SetFirst(3)
 	p.SetOrder(ASC)
 	p.SetAfterCursor(anchorCursor)
 
@@ -624,7 +624,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndKeyOptions() {
 
 	opts = []Option{
 		WithKeys("CreatedAt", "ID"),
-		WithLimit(3),
+		WithFirst(3),
 		WithOrder(ASC),
 		WithBefore(anchorCursor),
 	}
@@ -636,7 +636,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndKeyOptions() {
 
 	p = New()
 	p.SetKeys("CreatedAt", "ID")
-	p.SetLimit(3)
+	p.SetFirst(3)
 	p.SetOrder(ASC)
 	p.SetBeforeCursor(anchorCursor)
 
@@ -663,7 +663,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndRuleOptions() {
 
 	result, c, err := New(
 		WithKeys("CreatedAt", "ID"),
-		WithLimit(3),
+		WithFirst(3),
 	).Paginate(s.db, &temp)
 	if err != nil {
 		s.FailNow(err.Error())
@@ -683,7 +683,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndRuleOptions() {
 			{Key: "CreatedAt"},
 			{Key: "ID"},
 		}...),
-		WithLimit(3),
+		WithFirst(3),
 		WithOrder(ASC),
 		WithAfter(anchorCursor),
 	}
@@ -698,7 +698,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndRuleOptions() {
 		{Key: "CreatedAt"},
 		{Key: "ID"},
 	}...)
-	p.SetLimit(3)
+	p.SetFirst(3)
 	p.SetOrder(ASC)
 	p.SetAfterCursor(anchorCursor)
 
@@ -717,7 +717,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndRuleOptions() {
 			{Key: "CreatedAt"},
 			{Key: "ID"},
 		}...),
-		WithLimit(3),
+		WithFirst(3),
 		WithOrder(ASC),
 		WithBefore(anchorCursor),
 	}
@@ -732,7 +732,7 @@ func (s *paginatorSuite) TestPaginateConsistencyBetweenBuilderAndRuleOptions() {
 		{Key: "CreatedAt"},
 		{Key: "ID"},
 	}...)
-	p.SetLimit(3)
+	p.SetFirst(3)
 	p.SetOrder(ASC)
 	p.SetBeforeCursor(anchorCursor)
 

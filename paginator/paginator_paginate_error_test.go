@@ -11,7 +11,7 @@ func (s *paginatorSuite) TestPaginateNoRule() {
 func (s *paginatorSuite) TestPaginateInvalidLimit() {
 	var orders []order
 	_, _, err := New(&Config{
-		Limit: -1,
+		First: -1,
 	}).Paginate(s.db, &orders)
 	s.Equal(ErrInvalidLimit, err)
 }
