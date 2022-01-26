@@ -1,31 +1,5 @@
-# gorm-cursor-paginator [![Build Status](https://travis-ci.org/pilagod/gorm-cursor-paginator.svg?branch=master)](https://travis-ci.org/pilagod/gorm-cursor-paginator) [![Coverage Status](https://coveralls.io/repos/github/pilagod/gorm-cursor-paginator/badge.svg?branch=master&kill_cache=1)](https://coveralls.io/github/pilagod/gorm-cursor-paginator?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/pilagod/gorm-cursor-paginator)](https://goreportcard.com/report/github.com/pilagod/gorm-cursor-paginator)
-
-A paginator doing cursor-based pagination based on [GORM](https://github.com/go-gorm/gorm)
-
-> This doc is for v2, which uses [GORM v2](https://github.com/go-gorm/gorm). If you are using [GORM v1](https://github.com/jinzhu/gorm), please checkout [v1 doc](https://github.com/pilagod/gorm-cursor-paginator/tree/v1).
-
-## Features
-
-- Query extendable.
-- Multiple paging keys.
-- Paging rule customization for each key.
-- GORM `column` tag supported.
-- Error handling enhancement.
-- Exporting `cursor` module for advanced usage.
-
-## Installation
-
-```sh
-go get -u github.com/pilagod/gorm-cursor-paginator/v2
-```
-
-## Usage By Example
-
-```go
-import (
-   "github.com/pilagod/gorm-cursor-paginator/v2/paginator"
-)
-```
+A paginator doing cursor-based pagination based on [GORM](https://github.com/go-gorm/gorm) and [GORM-CURSOR-PAGINATION](https://github.com/pilagod/gorm-cursor-paginator)
+Supports cursor navigation using AFTER/BEFORE cursor setup and FIRST/LAST number of rows
 
 Given an `User` model for example:
 
@@ -44,17 +18,21 @@ We first need to create a `paginator.Paginator` for `User`, here are some useful
     func CreateUserPaginator(
         cursor paginator.Cursor,
         order *paginator.Order,
-        limit *int,
+        first *int,
+        last *int,
     ) *paginator.Paginator {
         opts := []paginator.Option{
             &paginator.Config{
                 Keys: []string{"ID", "JoinedAt"},
-                Limit: 10,
+                First: 10,
                 Order: paginator.ASC,
             },
         }
-        if limit != nil {
-            opts = append(opts, paginator.WithLimit(*limit))
+        if first != nil {
+            opts = append(opts, paginator.WithFirst(*first))
+        }
+        if last != nil {
+            opts = append(opts, paginator.WithLast(*last))
         }
         if order != nil {
             opts = append(opts, paginator.WithOrder(*order))
@@ -75,20 +53,24 @@ We first need to create a `paginator.Paginator` for `User`, here are some useful
     func CreateUserPaginator(
         cursor paginator.Cursor,
         order *paginator.Order,
-        limit *int,
+        first *int,
+        last *int,
     ) *paginator.Paginator {
         p := paginator.New(
             &paginator.Config{
                 Keys: []string{"ID", "JoinedAt"},
-                Limit: 10,
+                First: 10,
                 Order: paginator.ASC,
             },
         )
         if order != nil {
             p.SetOrder(*order)
         }
-        if limit != nil {
-            p.SetLimit(*limit)
+        if first != nil {
+            p.SetFirst(*first)
+        }
+        if last != nil {
+            p.SetLast(*last)
         }
         if cursor.After != nil {
             p.SetAfter(*cursor.After)
@@ -119,7 +101,7 @@ We first need to create a `paginator.Paginator` for `User`, here are some useful
                         NULLReplacement: "1970-01-01",
                     },
                 },
-                Limit: 10,
+                First: 10,
                 // Order here will apply to keys without order specified.
                 // In this example paginator will order by "ID" ASC, "JoinedAt" DESC.
                 Order: paginator.ASC, 
@@ -184,7 +166,7 @@ That's all! Enjoy paginating in the GORM world. :tada:
 Default options used by paginator when not specified:
 
 - `Keys`: `[]string{"ID"}`
-- `Limit`: `10`
+- `First`: `10`
 - `Order`: `paginator.DESC`
 
 ### paginator.Rule
@@ -195,25 +177,17 @@ Default options used by paginator when not specified:
     > This is especially useful when you have `JOIN` or table alias in your SQL query. If `SQLRepr` is not specified, paginator will get table name from model, plus table key derived by below rules to form the SQL query:
     > 1. Find GORM tag `column` on struct field.
     > 2. If tag not found, convert struct field name to snake case.
-- `NULLReplacement`(v2.2.0): Replacement for NULL value when paginating by nullable column.<br/>
+- `NULLReplacement`: Replacement for NULL value when paginating by nullable column.<br/>
     > If you paginate by nullable column, you will encounter [NULLS { FIRST | LAST } problems](https://learnsql.com/blog/how-to-order-rows-with-nulls/). This option let you decide how to order rows with NULL value. For instance, we can set this value to `1970-01-01` for a nullable `date` column, to ensure rows with NULL date will be placed at head when order is ASC, or at tail when order is DESC.
 
 ## Changelog
 
-### v2.2.0
+### v1.0.0
 
-- Add `NULLReplacement` to `paginator.Rule` to overcome [NULLS { FIRST | LAST } problems](https://learnsql.com/blog/how-to-order-rows-with-nulls/), credit to [@nikicc](https://github.com/nikicc).
-
-### v2.1.0
-
-- Let client control context, suggestion from [@khalilsarwari](https://github.com/khalilsarwari).
-
-### v2.0.1
-
-- Fix order flip bug when paginating backward, credit to [@sylviamoss](https://github.com/sylviamoss).
-
+- Add `first/last` pagination instead of `limit` 
+- 
 ## License
 
-© Cyan Ho (pilagod), 2018-NOW
+© Dmitry Krasnikov (mainpart), 2022-NOW
 
 Released under the [MIT License](https://github.com/pilagod/gorm-cursor-paginator/blob/master/LICENSE)

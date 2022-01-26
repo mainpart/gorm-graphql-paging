@@ -1,4 +1,4 @@
-module github.com/pilagod/gorm-cursor-paginator/v2
+module gorm-graphql-paginator
 
 go 1.17
 
