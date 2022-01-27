@@ -1,6 +1,6 @@
 package paginator
 
-import "gitlab.services.mts.ru/dykrasni/gorm-graphql-paginator/cursor"
+import "github.com/mainpart/gorm-graphql-paging/cursor"
 
 // Cursor re-exports cursor.Cursor
 type Cursor = cursor.Cursor

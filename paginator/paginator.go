@@ -8,8 +8,8 @@ import (
 	"github.com/iancoleman/strcase"
 	"gorm.io/gorm"
 
-	"gitlab.services.mts.ru/dykrasni/gorm-graphql-paginator/cursor"
-	"gitlab.services.mts.ru/dykrasni/gorm-graphql-paginator/internal/util"
+	"github.com/mainpart/gorm-graphql-paging/cursor"
+	"github.com/mainpart/gorm-graphql-paging/internal/util"
 )
 
 // New creates paginator

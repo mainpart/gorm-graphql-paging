@@ -8,7 +8,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"gitlab.services.mts.ru/dykrasni/gorm-graphql-paginator/paginator"
+	"github.com/mainpart/gorm-graphql-paging/paginator"
 )
 
 // Product for product model

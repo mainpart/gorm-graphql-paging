@@ -1,6 +1,6 @@
 package paginator
 
-import "gitlab.services.mts.ru/dykrasni/gorm-graphql-paginator/internal/util"
+import "github.com/mainpart/gorm-graphql-paging/internal/util"
 
 // Rule for paginator
 type Rule struct {
