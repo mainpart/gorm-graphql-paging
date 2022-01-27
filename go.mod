@@ -1,4 +1,4 @@
-module gorm-graphql-paginator
+module gitlab.services.mts.ru/dykrasni/gorm-graphql-paginator
 
 go 1.17
 

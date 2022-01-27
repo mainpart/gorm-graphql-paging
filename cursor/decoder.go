@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"reflect"
 
-	"gorm-graphql-paginator/internal/util"
+	"gitlab.services.mts.ru/dykrasni/gorm-graphql-paginator/internal/util"
 )
 
 // NewDecoder creates cursor decoder for model
