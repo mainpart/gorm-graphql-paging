@@ -50,9 +50,11 @@ func (p *Paginator) SetKeys(keys ...string) {
 
 func (p *Paginator) SetFirst(first int) {
 	p.first = first
+	p.last = 0
 }
 func (p *Paginator) SetLast(last int) {
 	p.last = last
+	p.first = 0
 }
 
 // SetOrder sets paging order
