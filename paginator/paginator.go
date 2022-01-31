@@ -78,6 +78,7 @@ func (p *Paginator) SetInvert(b bool) {
 
 // Paginate paginates data
 func (p *Paginator) Paginate(db *gorm.DB, dest interface{}) (result *gorm.DB, c Cursor, err error) {
+	var hasMore bool
 	if err = p.validate(dest); err != nil {
 		return
 	}
@@ -93,7 +94,6 @@ func (p *Paginator) Paginate(db *gorm.DB, dest interface{}) (result *gorm.DB, c 
 	elems := reflect.ValueOf(dest).Elem()
 	// only encode next cursor when elems is not empty slice
 	if elems.Kind() == reflect.Slice && elems.Len() > 0 {
-		var hasMore bool
 		if p.first > 0 {
 			if elems.Len() > p.first {
 				hasMore = true
@@ -108,13 +108,16 @@ func (p *Paginator) Paginate(db *gorm.DB, dest interface{}) (result *gorm.DB, c 
 		if c, err = p.encodeCursor(elems, hasMore); err != nil {
 			return
 		}
-		//if p.invertOrder {
-		//	elems.Set(reverse(elems))
-		//}
-		//if p.isBackward() {
-		//	elems.Set(reverse(elems))
-		//}
+		if p.cursor.After != nil || (p.cursor.Before != nil && hasMore) {
+			c.HasPrev = true
+		}
+		if (p.cursor.After != nil && hasMore) || p.cursor.Before != nil {
+			c.HasNext = true
+		}
 
+		if p.invertOrder {
+			elems.Set(reverse(elems))
+		}
 	}
 	return
 }
@@ -287,7 +290,7 @@ func (p *Paginator) buildCursorSQLQueryArgs(fields []interface{}) (args []interf
 	return
 }
 
-func (p *Paginator) encodeCursor(elems reflect.Value, hasMore bool) (result Cursor, err error) {
+func (p *Paginator) encodeCursor(elems reflect.Value, _ bool) (result Cursor, err error) {
 	encoder := cursor.NewEncoder(p.getKeys()...)
 
 	after, err := encoder.Encode(elems.Index(elems.Len() - 1))
